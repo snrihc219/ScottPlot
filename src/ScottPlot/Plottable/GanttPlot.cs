@@ -19,9 +19,9 @@ namespace ScottPlot.Plottable
     {
         // data
         public double[] Spans;
-        public double Starts;
+        public double Offset;
         public double[] Ys;
-        public double[] YOffsets;
+        public double[] Starts;
 
         // customization
         public bool IsVisible { get; set; } = true;
@@ -52,7 +52,7 @@ namespace ScottPlot.Plottable
 
             Ys = ys ?? DataGen.Consecutive(spans.Length);
             Spans = spans;
-            YOffsets = starts;
+            Starts = starts;
         }
 
         public AxisLimits GetAxisLimits()
@@ -64,10 +64,10 @@ namespace ScottPlot.Plottable
 
             for (int i = 0; i < Spans.Length; i++)
             {
-                valueMin = Math.Min(valueMin, Ys[i] + YOffsets[i]);
-                valueMax = Math.Max(valueMax, Ys[i] + YOffsets[i]);
-                positionMin = Math.Min(positionMin, Spans[i]);
-                positionMax = Math.Max(positionMax, Spans[i]);
+                valueMin = Math.Min(valueMin, Spans[i] + Starts[i]);
+                valueMax = Math.Max(valueMax, Spans[i] + Starts[i]);
+                positionMin = Math.Min(positionMin, Ys[i]);
+                positionMax = Math.Max(positionMax, Ys[i]);
             }
 
             valueMin = Math.Min(valueMin, BaseValue);
@@ -79,12 +79,9 @@ namespace ScottPlot.Plottable
             positionMin -= BarWidth / 2;
             positionMax += BarWidth / 2;
 
-            positionMin += Starts;
-            positionMax += Starts;
+            positionMin += Offset;
+            positionMax += Offset;
 
-            //return VerticalOrientation ?
-            //    new AxisLimits(positionMin, positionMax, valueMin, valueMax) :
-            //    new AxisLimits(valueMin, valueMax, positionMin, positionMax);
             return new AxisLimits(valueMin, valueMax, positionMin, positionMax);
         }
 
@@ -92,14 +89,14 @@ namespace ScottPlot.Plottable
         {
             Validate.AssertHasElements("spans", Spans);
             Validate.AssertHasElements("ys", Ys);
-            Validate.AssertHasElements("yOffsets", YOffsets);
-            Validate.AssertEqualLength("spans, ys, and yOffsets", Spans, Ys, YOffsets);
+            Validate.AssertHasElements("yOffsets", Starts);
+            Validate.AssertEqualLength("spans, ys, and yOffsets", Spans, Ys, Starts);
 
             if (deep)
             {
                 Validate.AssertAllReal("spans", Spans);
                 Validate.AssertAllReal("ys", Ys);
-                Validate.AssertAllReal("yOffsets", YOffsets);
+                Validate.AssertAllReal("yOffsets", Starts);
             }
         }
 
@@ -108,17 +105,17 @@ namespace ScottPlot.Plottable
             using Graphics gfx = GDI.Graphics(bmp, dims, lowQuality);
             for (int barIndex = 0; barIndex < Spans.Length; barIndex++)
             {
-                RenderBarHorizontal(dims, gfx, Spans[barIndex] + Starts, Ys[barIndex], YOffsets[barIndex]);
+                RenderBarHorizontal(dims, gfx, Spans[barIndex] + Offset, Starts[barIndex], Ys[barIndex]);
             }
         }
 
-        private void RenderBarHorizontal(PlotDimensions dims, Graphics gfx, double position, double value, double yOffset)
+        private void RenderBarHorizontal(PlotDimensions dims, Graphics gfx, double value, double xOffset, double position)
         {
             // bar body
             float centerPx = dims.GetPixelY(position);
             double edge2 = position + BarWidth / 2;
-            double value1 = Math.Min(BaseValue, value) + yOffset;
-            double value2 = Math.Max(BaseValue, value) + yOffset;
+            double value1 = Math.Min(BaseValue, value) + xOffset;
+            double value2 = Math.Max(BaseValue, value) + xOffset;
             double valueSpan = value2 - value1;
             var rect = new RectangleF(
                 x: dims.GetPixelX(value1),
