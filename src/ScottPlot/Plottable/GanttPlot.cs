@@ -89,14 +89,14 @@ namespace ScottPlot.Plottable
         {
             Validate.AssertHasElements("spans", Spans);
             Validate.AssertHasElements("ys", Ys);
-            Validate.AssertHasElements("yOffsets", Starts);
+            Validate.AssertHasElements("starts", Starts);
             Validate.AssertEqualLength("spans, ys, and yOffsets", Spans, Ys, Starts);
 
             if (deep)
             {
                 Validate.AssertAllReal("spans", Spans);
                 Validate.AssertAllReal("ys", Ys);
-                Validate.AssertAllReal("yOffsets", Starts);
+                Validate.AssertAllReal("starts", Starts);
             }
         }
 
