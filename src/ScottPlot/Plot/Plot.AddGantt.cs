@@ -13,9 +13,9 @@ namespace ScottPlot
         /// <summary>
         /// Add a bar plot (values +/- errors) using defined positions
         /// </summary>
-        public GanttPlot AddGantt(double[] spans, double[] starts, Color? color = null)
+        public GanttPlot AddGantt(double[] spans, double[] starts, string[] seriesLabels = null, Color? color = null)
         {
-            var plottable = new GanttPlot(spans, starts)
+            var plottable = new GanttPlot(spans, starts, seriesLabels)
             {
                 FillColor = color ?? GetNextColor()
             };
@@ -23,29 +23,28 @@ namespace ScottPlot
             return plottable;
         }
 
-        public GanttPlot[] AddGantts(string[] groupLabels, string[] seriesLabels, double[][] spans, double[][] starts, Color?[] colors = null)
+        public GanttPlot[] AddGantts(string[] groupLabels, string[] seriesLabels, double[,] spans, double[,] starts, Color?[] colors = null)
         {
             if (groupLabels is null || seriesLabels is null || spans is null || starts is null)
                 throw new ArgumentException("labels, spans and starts cannot be null");
 
-            if (spans.GetLength(0) != starts.GetLength(0))
+            if (spans.GetLength(0) != starts.GetLength(0) || spans.GetLength(1) != starts.GetLength(1))
                 throw new ArgumentException("starts and spans must have identical size");
 
-            if (seriesLabels.Length != starts.Length)
+            if (seriesLabels.Length != starts.GetLength(1))
                 throw new ArgumentException("groupLabels and starts must be the same length");
 
-            foreach (double[] subArray in starts)
-                if (subArray.Length != groupLabels.Length)
-                    throw new ArgumentException("all arrays inside starts must be the same length as groupLabels");
+            if (starts.GetLength(0) != groupLabels.Length)
+                throw new ArgumentException("all arrays inside starts must be the same length as groupLabels");
 
-            int seriesCount = starts.Length;
-            GanttPlot[] gantts = new GanttPlot[seriesCount];
+            int groupSeries = starts.GetLength(0);
+            GanttPlot[] gantts = new GanttPlot[groupSeries];
 
-            for (int i = 0; i < seriesCount; i++)
+            for (int i = 0; i < groupSeries; i++)
             {
-                var plottable = new GanttPlot(spans[i], starts[i])
+                var plottable = new GanttPlot(spans.SliceRow(i).ToArray(), starts.SliceRow(i).ToArray(), seriesLabels)
                 {
-                    Label = seriesLabels[i],
+                    Label = groupLabels[i],
                     FillColor = colors == null ? GetNextColor() : colors[i] ?? GetNextColor()
                 };
                 Add(plottable);

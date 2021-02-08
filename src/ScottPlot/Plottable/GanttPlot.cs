@@ -22,6 +22,7 @@ namespace ScottPlot.Plottable
         public double Offset;
         public double[] Ys;
         public double[] Starts;
+        public string[] SeriesLabels;
 
         // customization
         public bool IsVisible { get; set; } = true;
@@ -41,18 +42,19 @@ namespace ScottPlot.Plottable
         public bool FontBold { set => Font.Bold = value; }
         public Color FontColor { set => Font.Color = value; }
 
-        public double BarWidth = .8;
+        public double BarWidth = .5;
         public double BaseValue = 0;
         public bool ShowValuesAboveBars;
 
-        public GanttPlot(double[] spans, double[] starts, double[] ys = null )
+        public GanttPlot(double[] spans, double[] starts, string[] seriesLabels = null )
         {
             if (spans is null || spans.Length == 0)
                 throw new InvalidOperationException("spans must be an array that contains elements");
 
-            Ys = ys ?? DataGen.Consecutive(spans.Length);
+            Ys = DataGen.Consecutive(spans.Length);
             Spans = spans;
             Starts = starts;
+            SeriesLabels = seriesLabels;
         }
 
         public AxisLimits GetAxisLimits()
