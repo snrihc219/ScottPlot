@@ -52,5 +52,13 @@ namespace ScottPlot
 
             return gantts;
         }
+
+        public ComboGanttPlot AddComboGantt(string[] groupLabels, string[] seriesLabels, 
+            double[,] spans, double[,] starts, int[] groupIndicator, Color?[] colors = null)
+        {
+            var plottable = new ComboGanttPlot(spans, starts, groupIndicator);
+            Add(plottable);
+            return plottable;
+        }
     }
 }
