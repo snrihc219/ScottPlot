@@ -54,11 +54,12 @@ namespace ScottPlot.Plottable
                 throw new InvalidOperationException("spans must be an array that contains elements");
 
             var groups = groupIndicator.Max() + 1;
+            var rows = spans.GetLength(0);
             Ys = DataGen.Consecutive(groups);
             var cg = new ColorGenerator();
 
-            Colors = new Color[groups];
-            for (int i = 0; i < spans.GetLength(0); i++)
+            Colors = new Color[rows];
+            for (int i = 0; i < rows; i++)
                 Colors[i] = cg.NextColor();
             Spans = spans;
             Starts = starts;
