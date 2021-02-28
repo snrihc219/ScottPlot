@@ -23,6 +23,7 @@ namespace ScottPlot.Plottable
         public double[] Ys;
         public double[] Starts;
         public string[] SeriesLabels;
+        public int[] YIndicator;
 
         // customization
         public bool IsVisible { get; set; } = true;
@@ -46,15 +47,18 @@ namespace ScottPlot.Plottable
         public double BaseValue = 0;
         public bool ShowValuesAboveBars;
 
-        public GanttPlot(double[] spans, double[] starts, string[] seriesLabels = null )
+        public GanttPlot(double[] spans, double[] starts, int[] yIndicator, 
+            string[] seriesLabels)
         {
             if (spans is null || spans.Length == 0)
                 throw new InvalidOperationException("spans must be an array that contains elements");
 
-            Ys = DataGen.Consecutive(spans.Length);
+            var groups = yIndicator.Max() + 1;
+            Ys = DataGen.Consecutive(groups);
             Spans = spans;
             Starts = starts;
             SeriesLabels = seriesLabels;
+            YIndicator = yIndicator;
         }
 
         public AxisLimits GetAxisLimits()
@@ -68,9 +72,9 @@ namespace ScottPlot.Plottable
             {
                 valueMin = Math.Min(valueMin, Spans[i] + Starts[i]);
                 valueMax = Math.Max(valueMax, Spans[i] + Starts[i]);
-                positionMin = Math.Min(positionMin, Ys[i]);
-                positionMax = Math.Max(positionMax, Ys[i]);
             }
+            positionMin = Math.Min(positionMin, Ys.Min());
+            positionMax = Math.Max(positionMax, Ys.Max()) + BarWidth / 2;
 
             valueMin = Math.Min(valueMin, BaseValue);
             valueMax = Math.Max(valueMax, BaseValue);
@@ -92,7 +96,7 @@ namespace ScottPlot.Plottable
             Validate.AssertHasElements("spans", Spans);
             Validate.AssertHasElements("ys", Ys);
             Validate.AssertHasElements("starts", Starts);
-            Validate.AssertEqualLength("spans, ys, and yOffsets", Spans, Ys, Starts);
+            Validate.AssertEqualLength("spans and starts", Spans, Starts);
 
             if (deep)
             {
@@ -107,11 +111,14 @@ namespace ScottPlot.Plottable
             using Graphics gfx = GDI.Graphics(bmp, dims, lowQuality);
             for (int barIndex = 0; barIndex < Spans.Length; barIndex++)
             {
-                RenderBarHorizontal(dims, gfx, Spans[barIndex] + Offset, Starts[barIndex], Ys[barIndex]);
+                RenderBarHorizontal(dims, gfx, 
+                    Spans[barIndex] + Offset, Starts[barIndex], 
+                    Ys[YIndicator[barIndex]], SeriesLabels[barIndex]);
             }
         }
 
-        private void RenderBarHorizontal(PlotDimensions dims, Graphics gfx, double value, double xOffset, double position)
+        private void RenderBarHorizontal(PlotDimensions dims, Graphics gfx, double value, 
+            double xOffset, double position, string label)
         {
             // bar body
             float centerPx = dims.GetPixelY(position);
@@ -132,11 +139,10 @@ namespace ScottPlot.Plottable
                 using (var outlinePen = new Pen(BorderColor, BorderLineWidth))
                     gfx.DrawRectangle(outlinePen, rect.X, rect.Y, rect.Width, rect.Height);
 
-            if (ShowValuesAboveBars)
-                using (var valueTextFont = GDI.Font(Font))
-                using (var valueTextBrush = GDI.Brush(Font.Color))
-                using (var sf = new StringFormat() { LineAlignment = StringAlignment.Center, Alignment = StringAlignment.Near })
-                    gfx.DrawString(value.ToString(), valueTextFont, valueTextBrush, rect.X + rect.Width, centerPx, sf);
+            using var valueTextFont = GDI.Font(Font);
+            using var valueTextBrush = GDI.Brush(Font.Color);
+            using var sf = new StringFormat() { LineAlignment = StringAlignment.Center, Alignment = StringAlignment.Center };
+            gfx.DrawString(label, valueTextFont, valueTextBrush, rect.X + rect.Width / 2, rect.Y - rect.Height / 2, sf);
         }
 
         public override string ToString()

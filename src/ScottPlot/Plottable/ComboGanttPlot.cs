@@ -24,6 +24,7 @@ namespace ScottPlot.Plottable
         public double[,] Starts;
         public int[] GroupIndicator;
         public string[] SeriesLabels;
+        public string[] GroupLabels;
 
         // customization
         public bool IsVisible { get; set; } = true;
@@ -48,7 +49,8 @@ namespace ScottPlot.Plottable
         public double BaseValue = 0;
         public bool ShowValuesAboveBars;
 
-        public ComboGanttPlot(double[,] spans, double[,] starts, int[] groupIndicator, string[] seriesLabels = null)
+        public ComboGanttPlot(double[,] spans, double[,] starts, int[] groupIndicator,
+            string[] groupLabels = null, string[] seriesLabels = null)
         {
             if (spans is null || spans.Length == 0)
                 throw new InvalidOperationException("spans must be an array that contains elements");
@@ -65,6 +67,7 @@ namespace ScottPlot.Plottable
             Starts = starts;
             GroupIndicator = groupIndicator;
             SeriesLabels = seriesLabels;
+            GroupLabels = groupLabels;
         }
 
         public AxisLimits GetAxisLimits()
@@ -127,15 +130,17 @@ namespace ScottPlot.Plottable
                     RenderBarHorizontal(dims, gfx, 
                         Spans[i, j] + Offset, Starts[i, j], 
                         Ys[GroupIndicator[i * columns + j]], 
+                        $"J{i + 1}-P{j + 1}",
                         Colors[i]);
                 }
             }
         }
 
-        private void RenderBarHorizontal(PlotDimensions dims, Graphics gfx, double value, double xOffset, double position, Color color)
+        private void RenderBarHorizontal(PlotDimensions dims, Graphics gfx, double value, 
+            double xOffset, double position, string label, Color color)
         {
             // bar body
-            float centerPx = dims.GetPixelY(position);
+            float centerPy = dims.GetPixelY(position);
             double edge2 = position + BarWidth / 2;
             double value1 = Math.Min(BaseValue, value) + xOffset;
             double value2 = Math.Max(BaseValue, value) + xOffset;
@@ -153,11 +158,10 @@ namespace ScottPlot.Plottable
                 using (var outlinePen = new Pen(BorderColor, BorderLineWidth))
                     gfx.DrawRectangle(outlinePen, rect.X, rect.Y, rect.Width, rect.Height);
 
-            if (ShowValuesAboveBars)
-                using (var valueTextFont = GDI.Font(Font))
-                using (var valueTextBrush = GDI.Brush(Font.Color))
-                using (var sf = new StringFormat() { LineAlignment = StringAlignment.Center, Alignment = StringAlignment.Near })
-                    gfx.DrawString(value.ToString(), valueTextFont, valueTextBrush, rect.X + rect.Width, centerPx, sf);
+            using var valueTextFont = GDI.Font(Font);
+            using var valueTextBrush = GDI.Brush(Font.Color);
+            using var sf = new StringFormat() { LineAlignment = StringAlignment.Center, Alignment = StringAlignment.Center };
+            gfx.DrawString(label, valueTextFont, valueTextBrush, rect.X + rect.Width/2, rect.Y - rect.Height/2, sf);
         }
 
         public override string ToString()
